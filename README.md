@@ -12,6 +12,8 @@ PWA para descubrir experiencias ecoturísticas del corredor Sugamuxi – Paz de 
 - El panel del operador usa datos mock persistidos en `localStorage` mientras no se conecte el backend.
 - Las rutas se crean y editan desde un modal; sus tarjetas muestran estado por color y se pueden filtrar por nombre, municipio o estado.
 - Al editar una ruta se pueden eliminar puntos del mapa individualmente desde el último punto o limpiar todo el recorrido.
+- La vista de reservas incluye un calendario mensual con indicadores para guianzas confirmadas y solicitudes pendientes, una agenda del día seleccionado y una sección inferior de solicitudes pendientes filtrable por ruta.
+- El detalle de cada reserva muestra los datos del visitante, mensaje, necesidades especiales y un enlace directo de WhatsApp cuando hay teléfono disponible.
 
 Los datos de experiencias públicas son actualmente demostrativos en `frontend/src/data/experiences.ts`. La vista está preparada para reemplazarlos por la API cuando se implemente el catálogo público.
 

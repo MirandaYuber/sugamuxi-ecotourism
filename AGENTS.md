@@ -32,6 +32,8 @@
 - **RNT:** significa Registro Nacional de Turismo. En la interfaz, el estado puede ser `Pendiente`, `Verificado` o `Rechazado`; actualmente es un dato simulado. Falta definir el flujo y los documentos reales de verificación.
 - Reemplazar los mocks de `frontend/src/features/operator/api.ts` por servicios reales cuando exista el backend, conservando la misma interfaz para no rehacer las vistas.
 - Completar la experiencia del viajero en `/dashboard`, incluyendo reservas, estados, detalle y cancelación.
+- Crear el formulario de solicitud de reserva del visitante con fecha, horario, número de personas, mensaje, necesidades especiales y teléfono de contacto; validar el teléfono, informar su uso por parte del guía y contemplar consentimiento para contacto/WhatsApp.
+- Mantener la vista de reservas organizada en calendario mensual, agenda del día y solicitudes pendientes; al conectar el backend se deben conservar los indicadores de estado y el filtro por ruta.
 - Conectar el login y la sesión con autenticación real; el token actual es únicamente de demostración.
 - Completar y revisar estados de carga, vacío, error y confirmación en catálogo, perfil, rutas y reservas.
 - Revisar responsive, accesibilidad y navegación del panel del operador en dispositivos móviles.

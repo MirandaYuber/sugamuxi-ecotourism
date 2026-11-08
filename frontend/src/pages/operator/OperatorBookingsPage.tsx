@@ -1,56 +1,56 @@
-import { Check, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Check, Eye, MessageCircle, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { operatorApi, type Booking, type BookingStatus } from '@/features/operator/api';
 
-const statuses: { value: BookingStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'Todas' },
-  { value: 'pending', label: 'Pendientes' },
-  { value: 'confirmed', label: 'Confirmadas' },
-  { value: 'cancelled', label: 'Canceladas' },
-  { value: 'completed', label: 'Completadas' },
-];
-
-const statusStyles: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-  confirmed: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
-  rejected: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
-  cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  completed: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
-};
-
+const statusStyles: Record<string, string> = { pending: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300', confirmed: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300', rejected: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300', cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300', completed: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' };
 const statusLabel = (value: string) => ({ pending: 'Pendiente', confirmed: 'Confirmada', rejected: 'Rechazada', cancelled: 'Cancelada', completed: 'Completada' }[value] ?? value);
+const monthLabel = new Intl.DateTimeFormat('es-CO', { month: 'long', year: 'numeric' });
+const dateLabel = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+const shortDateLabel = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' });
+const weekdayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const bookingDateKey = (booking: Booking) => dateKey(new Date(booking.booking_date));
+const whatsappUrl = (phone: string, routeTitle: string) => { const digits = phone.replace(/\D/g, ''); const international = digits.startsWith('57') ? digits : `57${digits}`; const message = encodeURIComponent(`Hola, soy el guía de ${routeTitle}. Me comunico contigo sobre tu solicitud de reserva.`); return `https://wa.me/${international}?text=${message}`; };
+
+function BookingDetails({ booking, onClose, onChange }: { booking: Booking; onClose: () => void; onChange: (id: number, status: BookingStatus) => void }) {
+  return <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section role="dialog" aria-modal="true" aria-labelledby="booking-modal-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 sm:p-8"><div className="flex items-start justify-between gap-4"><div><p className="text-sm text-green-700 dark:text-green-400">Detalle de solicitud</p><h3 id="booking-modal-title" className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{booking.route_title}</h3></div><button type="button" onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Cerrar detalles"><X size={20} /></button></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><div><p className="text-xs uppercase tracking-wide text-slate-400">Visitante</p><p className="mt-1 font-medium text-slate-900 dark:text-white">{booking.tourist_email}</p>{booking.tourist_phone && <p className="text-sm text-slate-500 dark:text-slate-400">{booking.tourist_phone}</p>}</div><div><p className="text-xs uppercase tracking-wide text-slate-400">Estado</p><span className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[booking.status]}`}>{statusLabel(booking.status)}</span></div><div><p className="text-xs uppercase tracking-wide text-slate-400">Fecha</p><p className="mt-1 font-medium text-slate-900 dark:text-white">{new Date(booking.booking_date).toLocaleDateString('es-CO')}</p></div><div><p className="text-xs uppercase tracking-wide text-slate-400">Horario preferido</p><p className="mt-1 font-medium text-slate-900 dark:text-white">{booking.preferred_time ?? 'No indicado'}</p></div><div><p className="text-xs uppercase tracking-wide text-slate-400">Personas</p><p className="mt-1 font-medium text-slate-900 dark:text-white">{booking.num_people}</p></div><div><p className="text-xs uppercase tracking-wide text-slate-400">Total</p><p className="mt-1 font-semibold text-green-800 dark:text-green-300">${booking.total_cop.toLocaleString('es-CO')} COP</p></div></div>{booking.tourist_phone && <a href={whatsappUrl(booking.tourist_phone, booking.route_title)} target="_blank" rel="noreferrer" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1ebe5d]"><MessageCircle size={18} /> Contactar por WhatsApp</a>}<div className="mt-6 space-y-4"><div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800"><p className="text-xs uppercase tracking-wide text-slate-400">Mensaje del visitante</p><p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-200">{booking.visitor_message || 'El visitante no dejó un mensaje.'}</p></div>{booking.special_requirements && <div className="rounded-xl bg-amber-50 p-4 dark:bg-amber-950/40"><p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Necesidades especiales</p><p className="mt-2 text-sm leading-6 text-amber-900 dark:text-amber-100">{booking.special_requirements}</p></div>}</div>{booking.status === 'pending' && <div className="mt-6 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => onChange(booking.id, 'rejected')} className="gap-1.5 border-red-200 text-red-700 dark:border-red-900/60 dark:text-red-300"><X size={16} /> Rechazar</Button><Button type="button" onClick={() => onChange(booking.id, 'confirmed')} className="gap-1.5"><Check size={16} /> Confirmar</Button></div>}</section></div>;
+}
 
 export function OperatorBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filter, setFilter] = useState<BookingStatus | 'all'>('all');
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [routeFilter, setRouteFilter] = useState('all');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    operatorApi.bookings().then(setBookings).catch((e) => setError(e.message));
-  }, []);
+  useEffect(() => { operatorApi.bookings().then((items) => { setBookings(items); setSelectedDate(items[0] ? bookingDateKey(items[0]) : dateKey(new Date())); }).catch((e) => setError(e.message)); }, []);
 
   const change = async (id: number, status: BookingStatus) => {
-    try {
-      const updated = await operatorApi.updateBooking(id, status);
-      setBookings((current) => current.map((booking) => booking.id === id ? updated : booking));
-    } catch (e) {
-      setError((e as Error).message);
-    }
+    try { const updated = await operatorApi.updateBooking(id, status); setBookings((current) => current.map((booking) => booking.id === id ? updated : booking)); setSelectedBooking((current) => current?.id === id ? updated : current); } catch (e) { setError((e as Error).message); }
   };
 
-  const visible = filter === 'all' ? bookings : bookings.filter((booking) => booking.status === filter);
+  const routes = useMemo(() => [...new Set(bookings.map((booking) => booking.route_title))], [bookings]);
+  const selectedDayBookings = bookings.filter((booking) => bookingDateKey(booking) === selectedDate);
+  const pendingBookings = bookings.filter((booking) => booking.status === 'pending' && (routeFilter === 'all' || booking.route_title === routeFilter));
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const totalDays = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate();
+    return [...Array(firstDay.getDay()).fill(null), ...Array.from({ length: totalDays }, (_, index) => new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), index + 1))];
+  }, [calendarMonth]);
 
   return <section className="mx-auto max-w-6xl">
-    <div className="mb-6"><p className="text-sm text-green-700 dark:text-green-400">Atención al viajero</p><h2 className="text-3xl font-bold text-slate-900 dark:text-white">Solicitudes de reserva</h2><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Revisa y gestiona las solicitudes de tus experiencias.</p></div>
-    <div className="mb-5 flex gap-2 overflow-x-auto pb-2" aria-label="Filtrar reservas por estado">{statuses.map((item) => <button key={item.value} type="button" onClick={() => setFilter(item.value)} className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition ${filter === item.value ? 'bg-green-700 text-white shadow-sm' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-green-50 hover:text-green-800 dark:bg-slate-900 dark:text-slate-300 dark:ring-white/15 dark:hover:bg-slate-800 dark:hover:text-green-300'}`}>{item.label}</button>)}</div>
+    <div className="mb-6"><p className="text-sm text-green-700 dark:text-green-400">Agenda y atención al viajero</p><h2 className="text-3xl font-bold text-slate-900 dark:text-white">Solicitudes de reserva</h2><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Organiza tus guianzas y gestiona las solicitudes de tus experiencias.</p></div>
     {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</p>}
-    <div className="space-y-3">
-      {visible.map((booking) => <article key={booking.id} className="flex flex-col gap-4 rounded-xl border bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-slate-900 dark:text-white">{booking.route_title}</h3><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[booking.status]}`}>{statusLabel(booking.status)}</span></div><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{booking.tourist_email} · {booking.num_people} personas · {new Date(booking.booking_date).toLocaleDateString('es-CO')}</p><p className="mt-1 text-sm font-semibold text-green-800 dark:text-green-300">${booking.total_cop.toLocaleString('es-CO')} COP</p></div>
-        {booking.status === 'pending' && <div className="flex shrink-0 gap-2"><Button type="button" onClick={() => change(booking.id, 'confirmed')} className="gap-1.5"><Check size={16} /> Confirmar</Button><Button type="button" variant="outline" onClick={() => change(booking.id, 'rejected')} className="gap-1.5 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"><X size={16} /> Rechazar</Button></div>}
-      </article>)}
+
+    <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900"><div className="mb-5 flex items-center justify-between"><h3 className="text-lg font-bold text-slate-900 dark:text-white capitalize">{monthLabel.format(calendarMonth)}</h3><div className="flex gap-1"><button type="button" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Mes anterior"><ChevronLeft size={18} /></button><button type="button" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Mes siguiente"><ChevronRight size={18} /></button></div></div><div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-400">{weekdayLabels.map((day) => <span key={day} className="py-2">{day}</span>)}{calendarDays.map((day, index) => { if (!day) return <span key={`empty-${index}`} />; const key = dateKey(day); const dayBookings = bookings.filter((booking) => bookingDateKey(booking) === key); const hasPending = dayBookings.some((booking) => booking.status === 'pending'); const hasConfirmed = dayBookings.some((booking) => ['confirmed', 'completed'].includes(booking.status)); return <button type="button" key={key} onClick={() => setSelectedDate(key)} className={`relative flex min-h-12 flex-col items-center justify-center rounded-lg text-sm transition ${selectedDate === key ? 'bg-green-700 font-bold text-white' : 'text-slate-700 hover:bg-green-50 dark:text-slate-200 dark:hover:bg-slate-800'}`}><span>{day.getDate()}</span>{dayBookings.length > 0 && <span className="mt-1 flex gap-1"><i className={`h-1.5 w-1.5 rounded-full ${hasConfirmed ? 'bg-green-500' : 'bg-transparent'}`} /> <i className={`h-1.5 w-1.5 rounded-full ${hasPending ? 'bg-amber-500' : 'bg-transparent'}`} /></span>}</button>; })}</div><div className="mt-5 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400"><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-green-500" /> Confirmada</span><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-amber-500" /> Pendiente</span></div></section>
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900"><p className="text-sm font-semibold capitalize text-green-700 dark:text-green-400">{selectedDate ? dateLabel.format(new Date(`${selectedDate}T12:00:00`)) : 'Selecciona un día'}</p><h3 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">Agenda del día</h3><div className="mt-5 space-y-3">{selectedDayBookings.map((booking) => <button type="button" key={booking.id} onClick={() => setSelectedBooking(booking)} className="w-full rounded-xl border border-slate-200 p-4 text-left transition hover:border-green-500 hover:bg-green-50 dark:border-white/10 dark:hover:bg-slate-800"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-slate-900 dark:text-white">{booking.preferred_time ?? 'Hora no indicada'}</p><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{booking.route_title}</p></div><span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusStyles[booking.status]}`}>{statusLabel(booking.status)}</span></div><p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{booking.num_people} personas · {booking.tourist_email}</p></button>)}{selectedDayBookings.length === 0 && <p className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">No tienes reservas para este día.</p>}</div></section>
     </div>
-    {visible.length === 0 && <div className="rounded-xl border border-dashed bg-white p-10 text-center dark:border-white/10 dark:bg-slate-900"><p className="font-semibold text-slate-800 dark:text-white">No hay reservas en este estado</p><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Las nuevas solicitudes aparecerán aquí.</p></div>}
+
+    <section className="mt-8"><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm text-amber-700 dark:text-amber-400">Requieren tu respuesta</p><h3 className="text-2xl font-bold text-slate-900 dark:text-white">Solicitudes pendientes</h3></div><label className="text-sm font-medium text-slate-600 dark:text-slate-300">Filtrar por ruta<select value={routeFilter} onChange={(event) => setRouteFilter(event.target.value)} className="ml-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900 dark:text-white"><option value="all">Todas las rutas</option>{routes.map((route) => <option key={route}>{route}</option>)}</select></label></div><div className="space-y-3">{pendingBookings.map((booking) => <article key={booking.id} className="flex flex-col gap-4 rounded-xl border bg-white p-5 shadow-sm transition hover:shadow-md dark:border-white/10 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"><button type="button" onClick={() => setSelectedBooking(booking)} className="min-w-0 text-left"><div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold text-slate-900 dark:text-white">{booking.route_title}</h4><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[booking.status]}`}>Pendiente</span></div><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{shortDateLabel.format(new Date(booking.booking_date))} · {booking.num_people} personas · {booking.tourist_email}</p><p className="mt-1 text-sm font-semibold text-green-800 dark:text-green-300">${booking.total_cop.toLocaleString('es-CO')} COP</p></button><div className="flex shrink-0 flex-wrap gap-2"><Button type="button" variant="outline" onClick={() => setSelectedBooking(booking)} className="gap-1.5 dark:border-white/15 dark:text-slate-200 dark:hover:bg-slate-800"><Eye size={16} /> Ver detalles</Button><Button type="button" onClick={() => change(booking.id, 'confirmed')} className="gap-1.5"><Check size={16} /> Confirmar</Button><Button type="button" variant="outline" onClick={() => change(booking.id, 'rejected')} className="gap-1.5 border-red-200 text-red-700 dark:border-red-900/60 dark:text-red-300"><X size={16} /> Rechazar</Button></div></article>)}</div>{pendingBookings.length === 0 && <div className="rounded-xl border border-dashed bg-white p-10 text-center dark:border-white/10 dark:bg-slate-900"><p className="font-semibold text-slate-800 dark:text-white">No hay solicitudes pendientes</p><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Las nuevas solicitudes aparecerán aquí.</p></div>}</section>
+    {selectedBooking && <BookingDetails booking={selectedBooking} onClose={() => setSelectedBooking(null)} onChange={change} />}
   </section>;
 }
