@@ -1,0 +1,1 @@
+export function DashboardPage() { return <main className="mx-auto max-w-5xl p-6"><h1 className="text-2xl font-bold text-green-800">Panel de reservas</h1><p className="mt-2 text-slate-600">Área privada del viajero.</p></main>; }

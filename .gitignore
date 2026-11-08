@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+*.tsbuildinfo
+*.d.ts
+*.js
+!frontend/eslint.config.js
+!frontend/vite.config.ts
+!frontend/tailwind.config.ts
+.env
+!.env.example
+.pytest_cache/
+coverage/
+postgres_data/
