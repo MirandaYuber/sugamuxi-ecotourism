@@ -14,6 +14,8 @@ PWA para descubrir experiencias ecoturísticas del corredor Sugamuxi – Paz de 
 - Al editar una ruta se pueden eliminar puntos del mapa individualmente desde el último punto o limpiar todo el recorrido.
 - La vista de reservas incluye un calendario mensual con indicadores para guianzas confirmadas y solicitudes pendientes, una agenda del día seleccionado y una sección inferior de solicitudes pendientes filtrable por ruta.
 - El detalle de cada reserva muestra los datos del visitante, mensaje, necesidades especiales y un enlace directo de WhatsApp cuando hay teléfono disponible.
+- El visitante debe iniciar sesión para solicitar una reserva; el login unificado redirige visitantes y guías según su rol.
+- Las reservas del visitante se consultan en un modal desde el menú de usuario o después de enviar una solicitud; no existe una vista separada de dashboard del visitante.
 
 Los datos de experiencias públicas son actualmente demostrativos en `frontend/src/data/experiences.ts`. La vista está preparada para reemplazarlos por la API cuando se implemente el catálogo público.
 

@@ -41,6 +41,6 @@
 ### Integración pendiente
 
 - **RNT:** significa Registro Nacional de Turismo. En la interfaz, el estado puede ser `Pendiente`, `Verificado` o `Rechazado`; actualmente es un dato simulado. Falta definir el flujo y los documentos reales de verificación.
-- Completar la experiencia del viajero en `/dashboard`, incluyendo reservas, estados, detalle y cancelación.
+- Mantener el flujo del visitante basado en modales: solicitar reserva desde el detalle y consultar/cancelar reservas desde el menú de usuario, sin reintroducir un dashboard separado.
 - Mantener la vista de reservas organizada en calendario mensual, agenda del día y solicitudes pendientes; al conectar el backend se deben conservar los indicadores de estado y el filtro por ruta.
 - Definir qué campos y evidencias requiere el proceso de verificación RNT antes de diseñar su integración.

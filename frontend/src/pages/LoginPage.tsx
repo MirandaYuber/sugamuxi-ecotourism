@@ -45,9 +45,9 @@ export function LoginPage() {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300">
                   <ShieldCheck size={25} />
                 </div>
-                <p className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">Panel del guía</p>
+              <p className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">Acceso para visitantes y guías</p>
                 <h2 className="text-3xl font-bold tracking-tight text-green-950 dark:text-white">Bienvenido de nuevo</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Ingresa para continuar cuidando y compartiendo tu experiencia.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Ingresa para gestionar tus reservas o administrar tus experiencias.</p>
               </div>
               <LoginForm />
               <p className="mt-6 text-center text-xs leading-5 text-slate-400 dark:text-slate-500">Acceso de demostración. La autenticación real estará disponible cuando conectemos el backend.</p>

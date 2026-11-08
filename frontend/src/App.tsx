@@ -1,9 +1,10 @@
-import { ArrowRight, MapPin, Search, Star, UserRound } from 'lucide-react';
+import { ArrowRight, MapPin, Search, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useSearchStore } from '@/stores/useSearchStore';
 import { experiences, formatPrice } from '@/data/experiences';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { UserMenu } from '@/components/UserMenu';
 
 const municipalities = ['Todos', 'Sogamoso', 'Corrales', 'Tasco', 'Paz de Río'];
 
@@ -28,9 +29,7 @@ export function App() {
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link to="/login" className="flex items-center gap-2 rounded-full border border-green-800/15 bg-white px-4 py-2 text-sm font-semibold text-green-900 transition hover:border-green-800/40 hover:bg-green-50 dark:border-white/15 dark:bg-slate-900 dark:text-green-300 dark:hover:bg-slate-800">
-            <UserRound size={16} /> <span className="hidden sm:inline">Ingresar</span>
-          </Link>
+          <UserMenu />
         </div>
       </header>
 
