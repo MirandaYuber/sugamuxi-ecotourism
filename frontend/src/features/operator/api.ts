@@ -3,7 +3,7 @@ export type Difficulty = 'low' | 'medium' | 'high';
 export type BookingStatus = 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'completed';
 export type Municipality = 'Sogamoso' | 'Corrales' | 'Tasco' | 'Paz de Río';
 
-export interface OperatorProfile { id?: number; full_name: string; municipality: Municipality; phone: string; rnt_number: string; soporte_rnt_url?: string; bio?: string; verification_status?: 'pending' | 'verified' | 'rejected'; }
+export interface OperatorProfile { id?: number; full_name: string; municipality: Municipality; phone: string; rnt_number: string; soporte_rnt_url?: string; bio?: string; verification_status?: 'pending' | 'verified' | 'rejected'; rating?: number; }
 export interface Route { id: number; title: string; description: string; municipality?: Municipality; difficulty: Difficulty; duration_hours: number; price_cop: number; location_start: { latitude: number; longitude: number }; route_points: { latitude: number; longitude: number }[]; status: RouteStatus; created_at: string; }
 export type RouteInput = Omit<Route, 'id' | 'created_at'>;
 export interface Booking { id: number; route_id: number; route_title: string; tourist_email: string; tourist_phone?: string; booking_date: string; preferred_time?: string; num_people: number; visitor_message?: string; special_requirements?: string; status: BookingStatus; total_cop: number; }
@@ -16,7 +16,7 @@ const initialStore: MockStore = {
   profile: {
     full_name: 'María Fernanda López', municipality: 'Sogamoso', phone: '304 453 2134',
     rnt_number: 'RNT-BOY-00482', soporte_rnt_url: '',
-    bio: 'Guía local especializada en senderismo y experiencias de naturaleza.', verification_status: 'verified',
+    bio: 'Guía local especializada en senderismo y experiencias de naturaleza.', verification_status: 'verified', rating: 4.9,
   },
   routes: [
     { id: 1, title: 'Sendero Laguna de Tota', description: 'Recorrido guiado por paisajes de montaña y cultivos tradicionales.', municipality: 'Sogamoso', difficulty: 'medium', duration_hours: 4, price_cop: 85000, location_start: { latitude: 5.52, longitude: -73.0 }, route_points: [{ latitude: 5.52, longitude: -73.0 }, { latitude: 5.54, longitude: -72.98 }], status: 'active', created_at: '2026-01-15T10:00:00Z' },
@@ -36,6 +36,7 @@ function readStore(): MockStore {
     return structuredClone(initialStore);
   }
   const store = JSON.parse(saved) as MockStore;
+  store.profile = { ...initialStore.profile, ...store.profile };
   // Completa reservas creadas por versiones anteriores del mock con los nuevos datos de contacto.
   store.bookings = store.bookings.map((booking) => {
     const seed = initialStore.bookings.find((item) => item.id === booking.id);
