@@ -9,8 +9,13 @@ PWA para descubrir experiencias ecoturísticas del corredor Sugamuxi – Paz de 
 - Cambio de tema claro/oscuro persistido en `localStorage` sin flash durante la carga.
 - Consulta de disponibilidad por WhatsApp al número provisional `+57 304 453 2134`.
 - Panel protegido del operador en `/operator/*`, con perfil RNT, rutas, reservas y registro de puntos de recorrido en el mapa.
+- El panel del operador usa datos mock persistidos en `localStorage` mientras no se conecte el backend.
+- Las rutas se crean y editan desde un modal; sus tarjetas muestran estado por color y se pueden filtrar por nombre, municipio o estado.
+- Al editar una ruta se pueden eliminar puntos del mapa individualmente desde el último punto o limpiar todo el recorrido.
 
 Los datos de experiencias públicas son actualmente demostrativos en `frontend/src/data/experiences.ts`. La vista está preparada para reemplazarlos por la API cuando se implemente el catálogo público.
+
+El selector de tema está disponible en las vistas públicas y privadas. La preferencia se comparte entre vistas mediante `localStorage` usando la clave `sugamuxi-theme`.
 
 ## Desarrollo con Docker
 

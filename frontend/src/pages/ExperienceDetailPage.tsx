@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getExperience, formatPrice } from '@/data/experiences';
 import { RouteMap } from '@/components/RouteMap';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function ExperienceDetailPage() {
   const { id } = useParams();
@@ -23,7 +24,7 @@ export function ExperienceDetailPage() {
   const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${whatsappMessage}`;
 
   return <main className="min-h-screen bg-[#f7f8f3] dark:bg-slate-950">
-    <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10"><Link to="/" className="flex items-center gap-2 text-sm font-semibold text-green-800 dark:text-green-400"><ArrowLeft size={18} /> Volver a experiencias</Link><span className="font-bold text-green-950 dark:text-white">Sugamuxi <span className="font-medium text-green-700 dark:text-green-400">Ecoturismo</span></span></header>
+    <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10"><Link to="/" className="flex items-center gap-2 text-sm font-semibold text-green-800 dark:text-green-400"><ArrowLeft size={18} /> Volver a experiencias</Link><div className="flex items-center gap-3"><ThemeToggle /><span className="hidden font-bold text-green-950 dark:text-white sm:inline">Sugamuxi <span className="font-medium text-green-700 dark:text-green-400">Ecoturismo</span></span></div></header>
     <div className="mx-auto max-w-7xl px-5 pb-16 sm:px-8 lg:px-10">
       <div className="relative overflow-hidden rounded-3xl bg-slate-900 shadow-xl"><img src={experience.images[activeImage]} alt={`${experience.name} - imagen ${activeImage + 1}`} className="h-[310px] w-full object-cover sm:h-[450px] lg:h-[540px]" /><div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/10" /><button onClick={previousImage} className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white" aria-label="Imagen anterior"><ChevronLeft size={22} /></button><button onClick={nextImage} className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white" aria-label="Imagen siguiente"><ChevronRight size={22} /></button><div className="absolute bottom-5 left-5 right-5 flex items-end justify-between text-white sm:bottom-8 sm:left-8 sm:right-8"><div><span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-md">{experience.municipality}</span><h1 className="mt-3 text-3xl font-bold sm:text-5xl">{experience.name}</h1></div><span className="rounded-full bg-black/30 px-3 py-1 text-sm backdrop-blur-md">{activeImage + 1} / {experience.images.length}</span></div></div>
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_350px]">

@@ -1,24 +1,15 @@
-import { ArrowRight, MapPin, Moon, Search, Star, Sun, UserRound } from 'lucide-react';
+import { ArrowRight, MapPin, Search, Star, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchStore } from '@/stores/useSearchStore';
 import { experiences, formatPrice } from '@/data/experiences';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const municipalities = ['Todos', 'Sogamoso', 'Corrales', 'Tasco', 'Paz de Río'];
 
 export function App() {
   const { query, setQuery } = useSearchStore();
   const [municipality, setMunicipality] = useState('Todos');
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('sugamuxi-theme');
-    return savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('sugamuxi-theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
-
   const filteredExperiences = useMemo(() => experiences.filter((experience) => {
     const matchesMunicipality = municipality === 'Todos' || experience.municipality === municipality;
     const search = query.trim().toLowerCase();
@@ -36,9 +27,7 @@ export function App() {
           <span className="text-lg font-bold tracking-tight text-green-950 dark:text-white sm:text-xl">Sugamuxi <span className="font-medium text-green-700 dark:text-green-400">Ecoturismo</span></span>
         </Link>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setDarkMode((current) => !current)} className="flex h-10 w-10 items-center justify-center rounded-full border border-green-800/15 bg-white text-green-900 transition hover:border-green-800/40 hover:bg-green-50 dark:border-white/15 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-slate-800" aria-label={darkMode ? 'Activar modo claro' : 'Activar modo oscuro'} title={darkMode ? 'Modo claro' : 'Modo oscuro'}>
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeToggle />
           <Link to="/login" className="flex items-center gap-2 rounded-full border border-green-800/15 bg-white px-4 py-2 text-sm font-semibold text-green-900 transition hover:border-green-800/40 hover:bg-green-50 dark:border-white/15 dark:bg-slate-900 dark:text-green-300 dark:hover:bg-slate-800">
             <UserRound size={16} /> <span className="hidden sm:inline">Ingresar</span>
           </Link>
