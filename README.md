@@ -62,11 +62,13 @@ npm run build
 cd backend
 python -m venv .venv
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn src.main:app --reload
 ```
+
+El backend se reinició como una base FastAPI limpia en `backend/src/main.py`, sin endpoints de aplicación por ahora. Cuando se agregue el primer módulo de dominio, se configurará Alembic antes de crear o modificar tablas.
 
 No hay suite de tests configurada actualmente. El frontend usa React, TypeScript, Vite, Tailwind CSS, React Hook Form, Zod, Leaflet y React Leaflet.
 
 ## Backend
 
-La API FastAPI se monta bajo `/api/v1`. La autenticación usa JWT y las rutas del operador requieren el rol `operator`. El mapa de rutas guarda puntos como `route_points`; antes de usarlo sobre una base existente se debe crear una migración, ya que el proyecto aún usa `Base.metadata.create_all()` y no tiene Alembic configurado.
+La API todavía no tiene endpoints funcionales. La estructura base está preparada para organizar cada dominio dentro de `backend/src`, separando rutas HTTP, schemas/DTOs, servicios y repositorios.
