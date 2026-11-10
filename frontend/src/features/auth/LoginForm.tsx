@@ -2,10 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { AlertMessage } from '@/components/AlertMessage';
+import { AuthApiError, login } from './api';
 
 const loginSchema = z.object({ email: z.string().email('Ingresa un correo válido'), password: z.string().min(8, 'Mínimo 8 caracteres') });
 type LoginValues = z.infer<typeof loginSchema>;
@@ -19,13 +21,19 @@ export function LoginForm() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
   const onSubmit = async (values: LoginValues) => {
     setSubmitError('');
-    // Acceso local temporal mientras el catálogo y la autenticación sigan siendo estáticos.
-    localStorage.setItem('access_token', `demo-${role}-session:${values.email}`);
-    localStorage.setItem('user_role', role);
-    navigate(searchParams.get('returnTo') ?? (role === 'operator' ? '/operator/dashboard' : '/'));
+    try {
+      const result = await login(values.email, values.password);
+      localStorage.setItem('access_token', result.access_token);
+      localStorage.setItem('user_role', result.user.role === 'guide' ? 'operator' : 'visitor');
+      navigate(searchParams.get('returnTo') ?? (result.user.role === 'guide' ? '/operator/dashboard' : '/'));
+    } catch (error) {
+      setSubmitError(error instanceof AuthApiError && error.status === 401
+        ? 'Correo o contraseña incorrectos.'
+        : error instanceof Error ? error.message : 'No fue posible iniciar sesión.');
+    }
   };
   return <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-    {submitError && <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"><AlertCircle className="mt-0.5 shrink-0" size={17} /><span>{submitError}</span></div>}
+    {submitError && <AlertMessage message={submitError} />}
     <fieldset><legend className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">¿Qué tipo de cuenta tienes?</legend><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRole('visitor')} className={`rounded-xl border px-3 py-3 text-sm font-semibold ${role === 'visitor' ? 'border-green-700 bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300' : 'border-slate-200 text-slate-500 dark:border-white/10 dark:text-slate-400'}`}>Soy visitante</button><button type="button" onClick={() => setRole('operator')} className={`rounded-xl border px-3 py-3 text-sm font-semibold ${role === 'operator' ? 'border-green-700 bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300' : 'border-slate-200 text-slate-500 dark:border-white/10 dark:text-slate-400'}`}>Soy guía</button></div></fieldset>
     <div>
       <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Correo electrónico</label>

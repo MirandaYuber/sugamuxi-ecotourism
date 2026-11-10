@@ -65,10 +65,19 @@ pip install -r requirements.txt
 uvicorn src.main:app --reload
 ```
 
-El backend se reinició como una base FastAPI limpia en `backend/src/main.py`, sin endpoints de aplicación por ahora. Cuando se agregue el primer módulo de dominio, se configurará Alembic antes de crear o modificar tablas.
+El backend incluye autenticación JWT inicial en `/api/auth`: registro, login y consulta del usuario actual (`/me`). Los usuarios se persisten en PostgreSQL mediante SQLAlchemy y la migración `0001_add_auth_role` de Alembic.
+
+El endpoint protegido `GET /api/bookings/me` devuelve las reservas del visitante autenticado desde PostgreSQL. Requiere un token Bearer de un usuario con rol `visitor` y responde con el formato estándar `{ code, message, success, data }`.
+
+Ejemplo:
+
+```bash
+curl http://localhost:8000/api/bookings/me \
+  -H "Authorization: Bearer <access_token>"
+```
 
 No hay suite de tests configurada actualmente. El frontend usa React, TypeScript, Vite, Tailwind CSS, React Hook Form, Zod, Leaflet y React Leaflet.
 
 ## Backend
 
-La API todavía no tiene endpoints funcionales. La estructura base está preparada para organizar cada dominio dentro de `backend/src`, separando rutas HTTP, schemas/DTOs, servicios y repositorios.
+La estructura base está preparada para organizar cada dominio dentro de `backend/src`, separando rutas HTTP, schemas/DTOs, servicios y repositorios. La autenticación inicial acepta únicamente los roles `visitor` y `guide`.
