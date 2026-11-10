@@ -9,6 +9,7 @@
 
 ## Commands and verification
 
+- Cada endpoint nuevo debe implementarse junto con su consumidor en la vista o flujo frontend correspondiente; no dejar endpoints funcionales sin integración visual.
 - Frontend local setup: `cd frontend && npm install`; run with `npm run dev`. Verify in this order: `npm run lint`, then `npm run build` (`build` runs `tsc -b` before `vite build`). There is no test script.
 - Keep `frontend/package-lock.json` synchronized with `frontend/package.json`. If the Docker `node_modules` volume is stale after dependency changes, run `docker compose -f frontend/.devops/docker/develop/docker-compose.yml -f frontend/.devops/docker/develop/docker-compose.override.yml run --rm frontend npm install`.
 - Backend local setup: `cd backend && python -m venv .venv && pip install -r requirements.txt`; run with `uvicorn src.main:app --reload`. There is no backend test suite or CI workflow.

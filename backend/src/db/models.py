@@ -20,6 +20,9 @@ class Route(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(180), nullable=False)
+    operator_profile_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    price_cop: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
 
 
 class Booking(Base):
@@ -33,3 +36,8 @@ class Booking(Base):
     num_people: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     total_cop: Mapped[int] = mapped_column(Integer, nullable=False)
+    preferred_time: Mapped[str] = mapped_column(String(30), nullable=False)
+    visitor_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    visitor_phone: Mapped[str] = mapped_column(String(30), nullable=False)
+    visitor_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    special_requirements: Mapped[str | None] = mapped_column(String(500), nullable=True)

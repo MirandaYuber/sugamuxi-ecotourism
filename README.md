@@ -69,6 +69,13 @@ El backend incluye autenticación JWT inicial en `/api/auth`: registro, login y 
 
 El endpoint protegido `GET /api/bookings/me` devuelve las reservas del visitante autenticado desde PostgreSQL. Requiere un token Bearer de un usuario con rol `visitor` y responde con el formato estándar `{ code, message, success, data }`.
 
+El formulario de solicitud consume `POST /api/bookings` con el mismo token. La solicitud queda asociada al visitante autenticado, se guarda con estado `pending` y calcula el total según el precio de la ruta.
+
+## Pendientes actuales
+
+- Reemplazar el catálogo demo por rutas persistidas en PostgreSQL para que las experiencias públicas puedan recibir solicitudes reales.
+- Implementar `DELETE` o `PATCH /api/bookings/{id}` para que el visitante pueda cancelar sus solicitudes desde la vista.
+
 Ejemplo:
 
 ```bash
