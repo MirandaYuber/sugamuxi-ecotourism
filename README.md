@@ -71,10 +71,18 @@ El endpoint protegido `GET /api/bookings/me` devuelve las reservas del visitante
 
 El formulario de solicitud consume `POST /api/bookings` con el mismo token. La solicitud queda asociada al visitante autenticado, se guarda con estado `pending` y calcula el total según el precio de la ruta.
 
+El panel del guía consume estos endpoints protegidos con rol `guide`:
+
+- `GET /api/routes`: lista las rutas del guía autenticado.
+- `POST /api/routes`: crea una ruta.
+- `PATCH /api/routes/{id}`: edita una ruta propia.
+
 ## Pendientes actuales
 
 - Reemplazar el catálogo demo por rutas persistidas en PostgreSQL para que las experiencias públicas puedan recibir solicitudes reales.
 - Implementar `DELETE` o `PATCH /api/bookings/{id}` para que el visitante pueda cancelar sus solicitudes desde la vista.
+
+Los errores de API del frontend se muestran como notificaciones flotantes mediante `frontend/src/components/AlertMessage.tsx`.
 
 Ejemplo:
 

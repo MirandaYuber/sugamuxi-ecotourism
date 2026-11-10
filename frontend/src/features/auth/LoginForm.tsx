@@ -15,7 +15,6 @@ type LoginValues = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [role, setRole] = useState<'visitor' | 'operator'>('visitor');
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
@@ -34,7 +33,6 @@ export function LoginForm() {
   };
   return <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
     {submitError && <AlertMessage message={submitError} />}
-    <fieldset><legend className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">¿Qué tipo de cuenta tienes?</legend><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setRole('visitor')} className={`rounded-xl border px-3 py-3 text-sm font-semibold ${role === 'visitor' ? 'border-green-700 bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300' : 'border-slate-200 text-slate-500 dark:border-white/10 dark:text-slate-400'}`}>Soy visitante</button><button type="button" onClick={() => setRole('operator')} className={`rounded-xl border px-3 py-3 text-sm font-semibold ${role === 'operator' ? 'border-green-700 bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-300' : 'border-slate-200 text-slate-500 dark:border-white/10 dark:text-slate-400'}`}>Soy guía</button></div></fieldset>
     <div>
       <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Correo electrónico</label>
       <div className="relative"><Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} /><Input id="email" type="email" autoComplete="email" placeholder="guia@ejemplo.com" className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-11 text-sm shadow-none transition focus:border-green-700 focus:ring-4 focus:ring-green-700/10 dark:border-white/10 dark:bg-slate-950" {...register('email')} /></div>

@@ -50,14 +50,31 @@ function writeStore(store: MockStore) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
+interface ApiResponse<T> { code: number; message: string; success: boolean; data?: T; }
+
+class OperatorApiError extends Error {
+  constructor(message: string, public readonly status: number) { super(message); this.name = 'OperatorApiError'; }
+}
+
+async function requestRoute<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('access_token');
+  const headers = new Headers(options?.headers);
+  headers.set('Content-Type', 'application/json');
+  headers.set('Authorization', `Bearer ${token}`);
+  const response = await fetch(url, { ...options, headers });
+  const body = await response.json().catch(() => null) as ApiResponse<T> | null;
+  if (!response.ok || !body?.success || !body.data) throw new OperatorApiError(body?.message ?? 'No fue posible completar la operación.', response.status);
+  return body.data;
+}
+
 const delay = <T,>(value: T): Promise<T> => Promise.resolve(structuredClone(value));
 
 export const operatorApi = {
   profile: () => delay(readStore().profile),
   saveProfile: (data: OperatorProfile) => { const store = readStore(); store.profile = { ...store.profile, ...data }; writeStore(store); return delay(store.profile); },
-  routes: () => delay(readStore().routes),
-  createRoute: (data: RouteInput) => { const store = readStore(); const route = { ...data, id: Date.now(), created_at: new Date().toISOString() }; store.routes = [route, ...store.routes]; writeStore(store); return delay(route); },
-  updateRoute: (id: number, data: RouteInput) => { const store = readStore(); const route = { ...data, id, created_at: store.routes.find((item) => item.id === id)?.created_at ?? new Date().toISOString() }; store.routes = store.routes.map((item) => item.id === id ? route : item); writeStore(store); return delay(route); },
+  routes: () => requestRoute<Route[]>('/api/routes'),
+  createRoute: (data: RouteInput) => requestRoute<Route>('/api/routes', { method: 'POST', body: JSON.stringify(data) }),
+  updateRoute: (id: number, data: RouteInput) => requestRoute<Route>(`/api/routes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   bookings: () => delay(readStore().bookings),
   updateBooking: (id: number, status: BookingStatus) => { const store = readStore(); const booking = store.bookings.find((item) => item.id === id); if (!booking) return Promise.reject(new Error('Reserva no encontrada')); booking.status = status; writeStore(store); return delay(booking); },
 };
