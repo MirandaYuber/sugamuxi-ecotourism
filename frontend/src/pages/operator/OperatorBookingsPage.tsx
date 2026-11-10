@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Check, Eye, MessageCircle, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { AlertMessage } from '@/components/AlertMessage';
 import { operatorApi, type Booking, type BookingStatus } from '@/features/operator/api';
 
 const statusStyles: Record<string, string> = { pending: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300', confirmed: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300', rejected: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300', cancelled: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300', completed: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' };
@@ -20,30 +21,32 @@ function BookingDetails({ booking, onClose, onChange }: { booking: Booking; onCl
 
 export function OperatorBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [dayBookings, setDayBookings] = useState<Booking[]>([]);
+  const [pendingBookingItems, setPendingBookingItems] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [routeFilter, setRouteFilter] = useState('all');
-  const [error, setError] = useState('');
+  const [notification, setNotification] = useState<{ message: string; variant: 'error' | 'success' } | null>(null);
 
-  useEffect(() => { operatorApi.bookings().then((items) => { setBookings(items); setSelectedDate(items[0] ? bookingDateKey(items[0]) : dateKey(new Date())); }).catch((e) => setError(e.message)); }, []);
+  useEffect(() => { const today = dateKey(new Date()); setSelectedDate(today); Promise.all([operatorApi.bookings(), operatorApi.pendingBookings()]).then(([all, pending]) => { setBookings(all); setPendingBookingItems(pending); }).catch((e) => setNotification({ message: e.message, variant: 'error' })); }, []);
+  useEffect(() => { if (selectedDate) operatorApi.bookings(selectedDate).then(setDayBookings).catch((e) => setNotification({ message: e.message, variant: 'error' })); }, [selectedDate]);
 
   const change = async (id: number, status: BookingStatus) => {
-    try { const updated = await operatorApi.updateBooking(id, status); setBookings((current) => current.map((booking) => booking.id === id ? updated : booking)); setSelectedBooking((current) => current?.id === id ? updated : current); } catch (e) { setError((e as Error).message); }
+    try { const updated = await operatorApi.updateBooking(id, status); setBookings((current) => current.map((booking) => booking.id === id ? updated : booking)); setDayBookings((current) => current.map((booking) => booking.id === id ? updated : booking)); setPendingBookingItems((current) => status === 'pending' ? current.map((booking) => booking.id === id ? updated : booking) : current.filter((booking) => booking.id !== id)); setSelectedBooking((current) => current?.id === id ? updated : current); setNotification({ message: 'El estado de la solicitud se actualizó exitosamente.', variant: 'success' }); } catch (e) { setNotification({ message: (e as Error).message, variant: 'error' }); }
   };
 
-  const routes = useMemo(() => [...new Set(bookings.map((booking) => booking.route_title))], [bookings]);
-  const selectedDayBookings = bookings.filter((booking) => bookingDateKey(booking) === selectedDate);
-  const pendingBookings = bookings.filter((booking) => booking.status === 'pending' && (routeFilter === 'all' || booking.route_title === routeFilter));
+  const routes = useMemo(() => [...new Set(pendingBookingItems.map((booking) => booking.route_title))], [pendingBookingItems]);
+  const selectedDayBookings = dayBookings;
+  const pendingBookings = pendingBookingItems.filter((booking) => routeFilter === 'all' || booking.route_title === routeFilter);
   const calendarDays = useMemo(() => {
     const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
     const totalDays = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate();
     return [...Array(firstDay.getDay()).fill(null), ...Array.from({ length: totalDays }, (_, index) => new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), index + 1))];
   }, [calendarMonth]);
 
-  return <section className="mx-auto max-w-6xl">
+  return <section className="mx-auto max-w-6xl">{notification && <AlertMessage message={notification.message} variant={notification.variant} onClose={() => setNotification(null)} />}
     <div className="mb-6"><p className="text-sm text-green-700 dark:text-green-400">Agenda y atención al viajero</p><h2 className="text-3xl font-bold text-slate-900 dark:text-white">Solicitudes de reserva</h2><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Organiza tus guianzas y gestiona las solicitudes de tus experiencias.</p></div>
-    {error && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</p>}
 
     <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
       <section className="rounded-2xl border bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900"><div className="mb-5 flex items-center justify-between"><h3 className="text-lg font-bold text-slate-900 dark:text-white capitalize">{monthLabel.format(calendarMonth)}</h3><div className="flex gap-1"><button type="button" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Mes anterior"><ChevronLeft size={18} /></button><button type="button" onClick={() => setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Mes siguiente"><ChevronRight size={18} /></button></div></div><div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-400">{weekdayLabels.map((day) => <span key={day} className="py-2">{day}</span>)}{calendarDays.map((day, index) => { if (!day) return <span key={`empty-${index}`} />; const key = dateKey(day); const dayBookings = bookings.filter((booking) => bookingDateKey(booking) === key); const hasPending = dayBookings.some((booking) => booking.status === 'pending'); const hasConfirmed = dayBookings.some((booking) => ['confirmed', 'completed'].includes(booking.status)); return <button type="button" key={key} onClick={() => setSelectedDate(key)} className={`relative flex min-h-12 flex-col items-center justify-center rounded-lg text-sm transition ${selectedDate === key ? 'bg-green-700 font-bold text-white' : 'text-slate-700 hover:bg-green-50 dark:text-slate-200 dark:hover:bg-slate-800'}`}><span>{day.getDate()}</span>{dayBookings.length > 0 && <span className="mt-1 flex gap-1"><i className={`h-1.5 w-1.5 rounded-full ${hasConfirmed ? 'bg-green-500' : 'bg-transparent'}`} /> <i className={`h-1.5 w-1.5 rounded-full ${hasPending ? 'bg-amber-500' : 'bg-transparent'}`} /></span>}</button>; })}</div><div className="mt-5 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400"><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-green-500" /> Confirmada</span><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-amber-500" /> Pendiente</span></div></section>

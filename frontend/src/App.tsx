@@ -1,8 +1,10 @@
 import { ArrowRight, MapPin, Search, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchStore } from '@/stores/useSearchStore';
-import { experiences, formatPrice } from '@/data/experiences';
+import { formatPrice, type Experience } from '@/data/experiences';
+import { catalogApi } from '@/features/catalog/api';
+import { AlertMessage } from '@/components/AlertMessage';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserMenu } from '@/components/UserMenu';
 
@@ -11,15 +13,12 @@ const municipalities = ['Todos', 'Sogamoso', 'Corrales', 'Tasco', 'Paz de Río']
 export function App() {
   const { query, setQuery } = useSearchStore();
   const [municipality, setMunicipality] = useState('Todos');
-  const filteredExperiences = useMemo(() => experiences.filter((experience) => {
-    const matchesMunicipality = municipality === 'Todos' || experience.municipality === municipality;
-    const search = query.trim().toLowerCase();
-    const matchesQuery = !search || `${experience.name} ${experience.description} ${experience.municipality}`.toLowerCase().includes(search);
-    return matchesMunicipality && matchesQuery;
-  }), [municipality, query]);
+  const [filteredExperiences, setExperiences] = useState<Experience[]>([]);
+  const [error, setError] = useState('');
+  useEffect(() => { catalogApi.list(query, municipality).then(setExperiences).catch((reason: Error) => setError(reason.message)); }, [query, municipality]);
 
   return (
-    <main className="min-h-screen bg-[#f7f8f3] transition-colors dark:bg-slate-950">
+    <main className="min-h-screen bg-[#f7f8f3] transition-colors dark:bg-slate-950">{error && <AlertMessage message={error} onClose={() => setError('')} />}
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
         <Link to="/" className="flex items-center gap-3 text-green-950" aria-label="Ir al inicio">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-800 text-white shadow-lg shadow-green-900/10">

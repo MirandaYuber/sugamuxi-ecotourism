@@ -1,7 +1,9 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock3, MapPinned, Mountain, Star, UserRound, X } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getExperience, formatPrice } from '@/data/experiences';
+import { formatPrice, type Experience } from '@/data/experiences';
+import { catalogApi } from '@/features/catalog/api';
+import { AlertMessage } from '@/components/AlertMessage';
 import { RouteMap } from '@/components/RouteMap';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ReservationModal } from '@/features/visitor/ReservationModal';
@@ -9,7 +11,8 @@ import { UserMenu } from '@/components/UserMenu';
 
 export function ExperienceDetailPage() {
   const { id } = useParams();
-  const experience = getExperience(id);
+  const [experience, setExperience] = useState<Experience | null>(null);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeImage, setActiveImage] = useState(0);
@@ -17,11 +20,13 @@ export function ExperienceDetailPage() {
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
 
   useEffect(() => {
+    setExperience(null);
+    catalogApi.detail(id ?? '').then(setExperience).catch((reason: Error) => setError(reason.message));
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (searchParams.get('reserve') === 'true' && localStorage.getItem('user_role') === 'visitor') setIsReservationModalOpen(true);
   }, [id, searchParams]);
 
-  if (!experience) return <main className="flex min-h-screen items-center justify-center bg-[#f7f8f3] p-6 dark:bg-slate-950"><div className="text-center"><h1 className="text-2xl font-bold text-green-950 dark:text-white">Experiencia no encontrada</h1><Link to="/" className="mt-4 inline-block text-green-700 underline dark:text-green-400">Volver al inicio</Link></div></main>;
+  if (!experience) return <main className="flex min-h-screen items-center justify-center bg-[#f7f8f3] p-6 dark:bg-slate-950">{error && <AlertMessage message={error} onClose={() => setError('')} />}<div className="text-center"><h1 className="text-2xl font-bold text-green-950 dark:text-white">{error ? 'Experiencia no encontrada' : 'Cargando experiencia...'}</h1><Link to="/" className="mt-4 inline-block text-green-700 underline dark:text-green-400">Volver al inicio</Link></div></main>;
 
   const previousImage = () => setActiveImage((current) => current === 0 ? experience.images.length - 1 : current - 1);
   const nextImage = () => setActiveImage((current) => (current + 1) % experience.images.length);

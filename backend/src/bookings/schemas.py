@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -12,6 +13,10 @@ class CreateBookingRequest(BaseModel):
     visitor_phone: str = Field(min_length=7, max_length=30)
     visitor_message: str | None = Field(default=None, max_length=500)
     special_requirements: str | None = Field(default=None, max_length=500)
+
+
+class UpdateBookingStatusRequest(BaseModel):
+    status: Literal['confirmed', 'rejected', 'cancelled', 'completed']
 
 
 class VisitorBookingResponse(BaseModel):
@@ -29,3 +34,7 @@ class VisitorBookingResponse(BaseModel):
     visitor_phone: str
     visitor_message: str | None = None
     special_requirements: str | None = None
+
+
+class OperatorBookingResponse(VisitorBookingResponse):
+    route_title: str

@@ -24,3 +24,17 @@ class RouteInput(BaseModel):
 class RouteResponse(RouteInput):
     id: int
     created_at: datetime
+
+
+class PublicRouteResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    detail: str
+    municipality: str
+    difficulty: str
+    duration_hours: float
+    price: int
+    location_start: RoutePoint
+    route_points: list[RoutePoint]
+    guide_name: str

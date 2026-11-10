@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { operatorApi, type Route, type RouteInput, type RouteStatus } from '@/features/operator/api';
 import { RouteMap } from '@/components/RouteMap';
+import { AlertMessage } from '@/components/AlertMessage';
 
 const initial: RouteInput = {
   title: '', description: '', municipality: 'Sogamoso', difficulty: 'low', duration_hours: 1, price_cop: 0,
@@ -27,18 +28,18 @@ export function OperatorRoutesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<RouteStatus | 'all'>('all');
-  const [error, setError] = useState('');
+  const [notification, setNotification] = useState<{ message: string; variant: 'error' | 'success' } | null>(null);
   const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<RouteInput>({ defaultValues: initial });
   const routePoints = watch('route_points') ?? [];
 
   useEffect(() => {
-    operatorApi.routes().then(setRoutes).catch((e) => setError(e.message));
+    operatorApi.routes().then(setRoutes).catch((e) => setNotification({ message: e.message, variant: 'error' }));
   }, []);
 
   const openModal = (route?: Route) => {
     setEditing(route ?? null);
     reset(route ? { ...route, route_points: route.route_points ?? [] } : initial);
-    setError('');
+    setNotification(null);
     setIsModalOpen(true);
   };
 
@@ -64,9 +65,10 @@ export function OperatorRoutesPage() {
     try {
       const saved = editing ? await operatorApi.updateRoute(editing.id, data) : await operatorApi.createRoute(data);
       setRoutes((current) => editing ? current.map((route) => route.id === saved.id ? saved : route) : [saved, ...current]);
+      setNotification({ message: editing ? 'La ruta se editó exitosamente.' : 'La ruta se creó exitosamente.', variant: 'success' });
       closeModal();
     } catch (e) {
-      setError((e as Error).message);
+      setNotification({ message: (e as Error).message, variant: 'error' });
     }
   };
 
@@ -77,7 +79,7 @@ export function OperatorRoutesPage() {
     return matchesSearch && matchesStatus;
   });
 
-  return <section className="mx-auto max-w-6xl">
+  return <section className="mx-auto max-w-6xl">{notification && <AlertMessage message={notification.message} variant={notification.variant} onClose={() => setNotification(null)} />}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div><p className="text-sm text-green-700 dark:text-green-400">Catálogo de experiencias</p><h2 className="text-3xl font-bold text-slate-900 dark:text-white">Rutas e itinerarios</h2></div>
       <Button type="button" onClick={() => openModal()}><Plus size={17} className="mr-2" /> Nueva ruta</Button>
@@ -86,7 +88,6 @@ export function OperatorRoutesPage() {
     <div className="mb-6 flex gap-3 overflow-x-auto pb-2" aria-label="Filtrar rutas por estado">
       {(['all', 'active', 'draft', 'paused'] as const).map((status) => <button key={status} type="button" onClick={() => setStatusFilter(status)} className={`whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition ${statusFilter === status ? 'bg-green-800 text-white shadow-md shadow-green-900/15' : 'border border-green-900/10 bg-white text-slate-600 hover:border-green-700 hover:text-green-800 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-green-500 dark:hover:text-green-300'}`}>{status === 'all' ? 'Todas' : labels[status]}</button>)}
     </div>
-    {error && !isModalOpen && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     <div className="grid gap-5 lg:grid-cols-2">
       {visibleRoutes.map((route) => <article key={route.id} className="overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md dark:border-white/10 dark:bg-slate-900">
         <div className="relative z-0 h-48 isolate"><RouteMap points={route.route_points.length ? route.route_points : [route.location_start]} /></div>
@@ -104,7 +105,6 @@ export function OperatorRoutesPage() {
     {isModalOpen && <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) closeModal(); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="route-modal-title" className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 sm:p-8">
         <div className="mb-6 flex items-start justify-between gap-4"><div><p className="text-sm text-green-700 dark:text-green-400">{editing ? 'Actualizar experiencia' : 'Nueva experiencia'}</p><h3 id="route-modal-title" className="text-2xl font-bold text-slate-900 dark:text-white">{editing ? 'Editar ruta' : 'Crear ruta'}</h3></div><button type="button" onClick={closeModal} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Cerrar modal"><X size={20} /></button></div>
-        {error && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <form onSubmit={handleSubmit(submit)} className="grid gap-4 md:grid-cols-2">
           <label className="text-sm font-medium md:col-span-2">Nombre de la ruta<Input {...register('title')} className="mt-1" required /></label>
           <label className="text-sm font-medium md:col-span-2">Descripción<textarea {...register('description')} className="mt-1 min-h-24 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-950 dark:text-white" required /></label>

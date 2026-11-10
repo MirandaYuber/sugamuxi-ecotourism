@@ -11,10 +11,11 @@ from src.core.responses import ApiResponse
 from src.db.models import OperatorProfile, Route
 from src.db.session import get_db
 
-from .schemas import RouteInput, RouteResponse
+from .schemas import PublicRouteResponse, RouteInput, RouteResponse
 
 
 router = APIRouter(prefix='/api/routes', tags=['routes'])
+public_router = APIRouter(prefix='/api/public/routes', tags=['public-catalog'])
 
 
 def serialize_route(route: Route) -> RouteResponse:
@@ -95,3 +96,27 @@ def update_route(
     db.commit()
     db.refresh(route)
     return ApiResponse(code=200, message='Ruta actualizada correctamente.', success=True, data=serialize_route(route))
+
+
+def serialize_public_route(route: Route, guide_name: str) -> PublicRouteResponse:
+    return PublicRouteResponse(id=route.id, name=route.title, description=route.description, detail=route.description, municipality=route.municipality, difficulty=route.difficulty, duration_hours=float(route.duration_hours), price=route.price_cop, location_start={'latitude': route.start_latitude, 'longitude': route.start_longitude}, route_points=route.route_points or [], guide_name=guide_name)
+
+
+@public_router.get('', response_model=ApiResponse[list[PublicRouteResponse]])
+def list_public_routes(municipality: str | None = None, search: str | None = None, db: Session = Depends(get_db)) -> ApiResponse[list[PublicRouteResponse]]:
+    query = select(Route, OperatorProfile.full_name).join(OperatorProfile, OperatorProfile.id == Route.operator_profile_id).where(Route.status == 'active')
+    if municipality:
+        query = query.where(Route.municipality == municipality)
+    if search:
+        query = query.where(Route.title.ilike(f'%{search.strip()}%'))
+    rows = db.execute(query.order_by(Route.created_at.desc())).all()
+    return ApiResponse(code=200, message='Experiencias obtenidas correctamente.', success=True, data=[serialize_public_route(route, guide_name) for route, guide_name in rows])
+
+
+@public_router.get('/{route_id}', response_model=ApiResponse[PublicRouteResponse])
+def get_public_route(route_id: int, db: Session = Depends(get_db)) -> ApiResponse[PublicRouteResponse]:
+    row = db.execute(select(Route, OperatorProfile.full_name).join(OperatorProfile, OperatorProfile.id == Route.operator_profile_id).where(Route.id == route_id, Route.status == 'active')).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail='La experiencia no existe o no está disponible.')
+    route, guide_name = row
+    return ApiResponse(code=200, message='Experiencia obtenida correctamente.', success=True, data=serialize_public_route(route, guide_name))
