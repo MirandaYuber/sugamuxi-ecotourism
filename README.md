@@ -100,7 +100,7 @@ docker compose -f frontend/.devops/docker/develop/docker-compose.yml \
   -f frontend/.devops/docker/develop/docker-compose.override.yml run --rm frontend npm run build
 ```
 
-No hay suite de tests configurada actualmente. El backend se verifica mediante migraciones, OpenAPI y ejecución dentro del contenedor; el frontend se verifica con `lint` y `build`.
+El backend se verifica mediante migraciones, OpenAPI y ejecución dentro del contenedor; el frontend se verifica con `lint` y `build`.
 
 El backend incluye autenticación JWT en `/api/auth`: registro con nombre, foto de perfil opcional y rol, login y consulta del usuario actual (`/me`). Los usuarios se persisten en PostgreSQL mediante SQLAlchemy y migraciones Alembic.
 
@@ -130,10 +130,6 @@ El calendario y la bandeja de solicitudes del guía consumen:
 - `PATCH /api/bookings/operator/{id}/status`: cambia el estado de una solicitud (`confirmed`, `rejected`, `cancelled` o `completed`).
 
 El registro usa `POST /api/auth/register` como `multipart/form-data` con `full_name`, `email`, `password`, `role` y la foto opcional `profile_image`. Las fotos de perfil se guardan en `backend/media/profiles/` y se sirven mediante `/media/profiles/...`.
-
-## Pendientes actuales
-
-- Permitir cambiar la foto de perfil del guía desde el perfil RNT después del registro.
 
 Los errores de API del frontend se muestran como notificaciones flotantes mediante `frontend/src/components/AlertMessage.tsx`.
 
