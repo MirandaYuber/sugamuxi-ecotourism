@@ -9,7 +9,7 @@ import { AlertMessage } from '@/components/AlertMessage';
 
 const initial: RouteInput = {
   title: '', description: '', municipality: 'Sogamoso', difficulty: 'low', duration_hours: 1, price_cop: 0,
-  location_start: { latitude: 5.7, longitude: -72.9 }, route_points: [], status: 'draft',
+  location_start: { latitude: 5.7, longitude: -72.9 }, route_points: [], images: [], status: 'draft',
 };
 
 const labels: Record<string, string> = {
@@ -29,6 +29,7 @@ export function OperatorRoutesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<RouteStatus | 'all'>('all');
   const [notification, setNotification] = useState<{ message: string; variant: 'error' | 'success' } | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<RouteInput>({ defaultValues: initial });
   const routePoints = watch('route_points') ?? [];
 
@@ -39,6 +40,7 @@ export function OperatorRoutesPage() {
   const openModal = (route?: Route) => {
     setEditing(route ?? null);
     reset(route ? { ...route, route_points: route.route_points ?? [] } : initial);
+    setSelectedImages([]);
     setNotification(null);
     setIsModalOpen(true);
   };
@@ -47,6 +49,7 @@ export function OperatorRoutesPage() {
     setIsModalOpen(false);
     setEditing(null);
     reset(initial);
+    setSelectedImages([]);
   };
 
   const addRoutePoint = (point: { latitude: number; longitude: number }) => {
@@ -63,7 +66,7 @@ export function OperatorRoutesPage() {
 
   const submit = async (data: RouteInput) => {
     try {
-      const saved = editing ? await operatorApi.updateRoute(editing.id, data) : await operatorApi.createRoute(data);
+      const saved = editing ? await operatorApi.updateRoute(editing.id, data, selectedImages) : await operatorApi.createRoute(data, selectedImages);
       setRoutes((current) => editing ? current.map((route) => route.id === saved.id ? saved : route) : [saved, ...current]);
       setNotification({ message: editing ? 'La ruta se editó exitosamente.' : 'La ruta se creó exitosamente.', variant: 'success' });
       closeModal();
@@ -112,7 +115,8 @@ export function OperatorRoutesPage() {
           <label className="text-sm font-medium">Dificultad<select {...register('difficulty')} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-950 dark:text-white"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option></select></label>
           <label className="text-sm font-medium">Estado<select {...register('status')} className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-950 dark:text-white"><option value="draft">Borrador</option><option value="active">Activa</option><option value="paused">Pausada</option></select></label>
           <label className="text-sm font-medium">Duración (horas)<Input type="number" min="1" step="0.5" {...register('duration_hours', { valueAsNumber: true })} className="mt-1" required /></label>
-          <label className="text-sm font-medium">Precio por persona (COP)<Input type="number" min="0" {...register('price_cop', { valueAsNumber: true })} className="mt-1" required /></label>
+           <label className="text-sm font-medium">Precio por persona (COP)<Input type="number" min="0" {...register('price_cop', { valueAsNumber: true })} className="mt-1" required /></label>
+           <label className="text-sm font-medium md:col-span-2">Imágenes de la experiencia<Input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={(event) => setSelectedImages(Array.from(event.target.files ?? []))} className="mt-1 block w-full cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-950 dark:text-white" /><span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">Puedes seleccionar varias imágenes de hasta 5 MB cada una.{editing?.images.length ? ` La ruta ya tiene ${editing.images.length} imagen(es); las nuevas reemplazarán las actuales.` : ''}</span></label>
           <div className="md:col-span-2"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium">Puntos de la ruta</p><div className="flex gap-2"><button type="button" onClick={removeLastRoutePoint} disabled={routePoints.length === 0} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/15 dark:text-slate-200 dark:hover:bg-slate-800"><Undo2 size={14} /> Eliminar último</button><button type="button" onClick={clearRoutePoints} disabled={routePoints.length === 0} className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"><Eraser size={14} /> Limpiar todos</button></div></div><div className="h-64 overflow-hidden rounded-lg border dark:border-white/10"><RouteMap points={routePoints.length ? routePoints : [initial.location_start]} editable onAddPoint={addRoutePoint} /></div><p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Haz clic en el mapa para agregar puntos al recorrido ({routePoints.length} registrados).</p></div>
           <div className="flex justify-end gap-3 md:col-span-2"><Button type="button" variant="outline" onClick={closeModal}>Cancelar</Button><Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : editing ? 'Guardar cambios' : 'Crear ruta'}</Button></div>
         </form>

@@ -2,6 +2,8 @@ export type AuthRole = 'visitor' | 'guide';
 
 export interface AuthUser {
   id: string;
+  full_name: string;
+  profile_image_url?: string | null;
   email: string;
   role: AuthRole;
 }
@@ -54,5 +56,22 @@ export async function login(email: string, password: string): Promise<AuthRespon
   if (!body?.success || !body.data) {
     throw new AuthApiError(body?.message ?? 'La respuesta del servidor no es válida.', body?.code ?? response.status);
   }
+  return body.data;
+}
+
+export async function registerUser(fullName: string, email: string, password: string, role: AuthRole, profileImage?: File): Promise<AuthResponse> {
+  const formData = new FormData();
+  formData.append('full_name', fullName);
+  formData.append('email', email);
+  formData.append('password', password);
+  formData.append('role', role);
+  if (profileImage) formData.append('profile_image', profileImage);
+  const response = await fetch('/api/auth/register', {
+    method: 'POST',
+    body: formData,
+  });
+  const body = await response.json().catch(() => null) as ApiResponse<AuthResponse> | null;
+  if (!response.ok) throw new AuthApiError(body?.message ?? 'No fue posible crear la cuenta.', response.status);
+  if (!body?.success || !body.data) throw new AuthApiError(body?.message ?? 'La respuesta del servidor no es válida.', body?.code ?? response.status);
   return body.data;
 }

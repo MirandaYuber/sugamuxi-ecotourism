@@ -1,27 +1,23 @@
 # Agent instructions
 
-## Repository shape
+## Structure and entrypoints
 
-- This is a two-package monorepo: `frontend/` is the Vite/React PWA and `backend/` is the FastAPI service; each package owns its Compose files under `.devops/docker/develop/`.
-- Frontend routing is defined in `frontend/src/main.tsx`: `/`, `/login`, and `/experiences/:id` are public; `/operator/*` is behind `ProtectedRoute` and redirects `/operator` to `/operator/dashboard`. There is no visitor dashboard route.
-- The backend entrypoint is `backend/src/main.py`; authentication is under `backend/src/auth` with `/api/auth/register`, `/api/auth/login`, and `/api/auth/me`. Add other features as responsibility-based modules under `backend/src`.
-- Public experiences are demo data in `frontend/src/data/experiences.ts`; visitor reservation listing is available at backend `/api/bookings/me`, while reservation creation/cancellation and operator data remain localStorage mocks.
+- This is a two-package repository: `frontend/` is the Vite/React PWA and `backend/` is the FastAPI service. Each package has its own Compose files under `.devops/docker/develop/`; there is no root Compose file.
+- Frontend routes are wired in `frontend/src/main.tsx`: `/`, `/login`, and `/experiences/:id` are public; `/operator/*` requires the operator role and `/operator` redirects to `/operator/dashboard`. There is no visitor dashboard route.
+- The frontend API clients are under `frontend/src/features/*/api.ts`; keep requests under `/api` because Vite proxies that prefix to `http://backend:8000`. API errors use `frontend/src/components/AlertMessage.tsx`.
+- The backend app entrypoint is `backend/src/main.py`. Add domains as modules under `backend/src` and register their routers there; current auth, bookings, routes, and operator-profile routers are already registered.
+- Public catalog data is now API-backed (`/api/public/routes`), while operator UI has an explicit offline toggle persisted as `operator_offline`. Do not reintroduce demo/localStorage data as the normal API path.
 
 ## Commands and verification
 
-- Cada endpoint nuevo debe implementarse junto con su consumidor en la vista o flujo frontend correspondiente; no dejar endpoints funcionales sin integración visual.
-- Los errores de API en las vistas deben mostrarse con la notificación reutilizable `frontend/src/components/AlertMessage.tsx`, no con mensajes incrustados en el layout.
-- Frontend local setup: `cd frontend && npm install`; run with `npm run dev`. Verify in this order: `npm run lint`, then `npm run build` (`build` runs `tsc -b` before `vite build`). There is no test script.
-- Keep `frontend/package-lock.json` synchronized with `frontend/package.json`. If the Docker `node_modules` volume is stale after dependency changes, run `docker compose -f frontend/.devops/docker/develop/docker-compose.yml -f frontend/.devops/docker/develop/docker-compose.override.yml run --rm frontend npm install`.
-- Backend local setup: `cd backend && python -m venv .venv && pip install -r requirements.txt`; run with `uvicorn src.main:app --reload`. There is no backend test suite or CI workflow.
-- Check Compose configuration without starting services:
-  - `docker compose -f frontend/.devops/docker/develop/docker-compose.yml -f frontend/.devops/docker/develop/docker-compose.override.yml config --quiet`
-  - `docker compose -f backend/.devops/docker/develop/docker-compose.yml -f backend/.devops/docker/develop/docker-compose.override.yml config --quiet`
-- Do not start, stop, recreate, or rebuild containers autonomously. Compose overrides expose frontend `5173`, backend `8000`, and PostgreSQL `5432`; there is no root Compose file.
+- Frontend: `cd frontend && npm install`; run `npm run lint` first, then `npm run build` (`build` runs `tsc -b` and `vite build`). There is no test script. Keep `package-lock.json` synchronized with `package.json`.
+- Backend: `cd backend && python -m venv .venv && pip install -r requirements.txt`; run with `uvicorn src.main:app --reload`. There is no backend test suite.
+- Implement each new backend endpoint together with its frontend consumer; do not leave functional API work without a visible flow.
+- Database schema changes require Alembic revisions; from `backend/`, apply them with `alembic upgrade head`. Do not use `Base.metadata.create_all()` at startup.
+- Validate Compose without starting services: `docker compose -f frontend/.devops/docker/develop/docker-compose.yml -f frontend/.devops/docker/develop/docker-compose.override.yml config --quiet` and `docker compose -f backend/.devops/docker/develop/docker-compose.yml -f backend/.devops/docker/develop/docker-compose.override.yml config --quiet`. Do not start, stop, recreate, or rebuild containers autonomously.
+- If the frontend Docker `node_modules` volume is stale after dependency changes, run `docker compose -f frontend/.devops/docker/develop/docker-compose.yml -f frontend/.devops/docker/develop/docker-compose.override.yml run --rm frontend npm install`.
 
-## Non-obvious constraints
+## Environment and assets
 
-- Preserve the `/api` prefix in future frontend requests: Vite proxies it to `http://backend:8000`.
-- Backend Compose loads `backend/.env.example` and the database service is named `db`; local backend settings read `.env`. Never commit real credentials.
-- Once domain models are introduced, use Alembic migrations for schema changes; do not call `Base.metadata.create_all()` at application startup.
+- Backend local settings read `backend/.env`; Compose loads `backend/.env.example` and the database service is named `db`. Never commit real credentials.
 - PWA assets referenced by `frontend/vite.config.ts` belong in `frontend/public/`. The provisional WhatsApp number is `+57 304 453 2134`.

@@ -13,5 +13,5 @@ export default defineConfig({
     }, workbox: { globPatterns: ['**/*.{js,css,html,svg,png}'], navigateFallback: '/index.html' }
   })],
   resolve: { alias: { '@': '/src' } },
-  server: { port: 5173, host: '0.0.0.0', proxy: { '/api': 'http://backend:8000' } }
+  server: { port: 5173, host: '0.0.0.0', proxy: { '/api': 'http://backend:8000', '/media': 'http://backend:8000' } }
 });

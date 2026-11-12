@@ -18,8 +18,6 @@ export interface VisitorBooking {
   created_at: string;
 }
 
-const STORAGE_KEY = 'sugamuxi_visitor_bookings';
-
 interface VisitorBookingApiResponse {
   id: number;
   route_id: number;
@@ -67,9 +65,6 @@ function mapBooking(booking: VisitorBookingApiResponse): VisitorBooking {
   return { id: booking.id, experience_id: booking.experience_id, experience_name: booking.experience_name, municipality: '—', booking_date: booking.booking_date.slice(0, 10), preferred_time: booking.preferred_time, num_people: booking.num_people, visitor_name: booking.visitor_name, visitor_email: booking.visitor_email, visitor_phone: booking.visitor_phone, visitor_message: booking.visitor_message, special_requirements: booking.special_requirements, total_cop: booking.total_cop, status: booking.status, created_at: booking.booking_date };
 }
 
-function readBookings(): VisitorBooking[] { const saved = localStorage.getItem(STORAGE_KEY); return saved ? JSON.parse(saved) as VisitorBooking[] : []; }
-function writeBookings(bookings: VisitorBooking[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings)); }
-
 export const visitorApi = {
   list: async (): Promise<VisitorBooking[]> => {
     const token = localStorage.getItem('access_token');
@@ -89,5 +84,12 @@ export const visitorApi = {
     if (!response.ok || !body?.success || !body.data) throw new VisitorApiError(body?.message ?? 'No fue posible enviar la solicitud.', response.status);
     return mapBooking(body.data);
   },
-  cancel: (id: number) => { const bookings = readBookings().map((booking) => booking.id === id && booking.status === 'pending' ? { ...booking, status: 'cancelled' as const } : booking); writeBookings(bookings); return Promise.resolve(bookings.find((booking) => booking.id === id)); },
+  cancel: async (id: number): Promise<VisitorBooking> => {
+    const token = localStorage.getItem('access_token');
+    if (!token) throw new VisitorApiError('Debes iniciar sesión para cancelar una reserva.', 401);
+    const response = await fetch(`/api/bookings/${id}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } });
+    const body = await response.json().catch(() => null) as ApiResponse<VisitorBookingApiResponse> | null;
+    if (!response.ok || !body?.success || !body.data) throw new VisitorApiError(body?.message ?? 'No fue posible cancelar la reserva.', response.status);
+    return mapBooking(body.data);
+  },
 };

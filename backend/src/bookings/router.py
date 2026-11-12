@@ -117,6 +117,36 @@ def create_booking(
     return ApiResponse(code=201, message='Solicitud de reserva enviada correctamente.', success=True, data=response)
 
 
+@router.patch('/{booking_id}', response_model=ApiResponse[VisitorBookingResponse])
+def cancel_my_booking(
+    booking_id: int,
+    user: Annotated[UserResponse, Depends(require_role(UserRole.VISITOR))],
+    db: Annotated[Session, Depends(get_db)],
+) -> ApiResponse[VisitorBookingResponse]:
+    row = db.execute(
+        select(Booking, Route.title)
+        .join(Route, Route.id == Booking.route_id)
+        .where(Booking.id == booking_id, Booking.tourist_id == int(user.id))
+    ).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail='La reserva no existe o no pertenece a este visitante.')
+    booking, route_title = row
+    if booking.status != 'pending':
+        raise HTTPException(status_code=409, detail='Solo se pueden cancelar solicitudes pendientes.')
+    booking.status = 'cancelled'
+    db.commit()
+    db.refresh(booking)
+    response = VisitorBookingResponse(
+        id=booking.id, route_id=booking.route_id, experience_id=booking.route_id,
+        experience_name=route_title, booking_date=booking.booking_date,
+        num_people=booking.num_people, status=booking.status, total_cop=booking.total_cop,
+        visitor_email=user.email, preferred_time=booking.preferred_time,
+        visitor_name=booking.visitor_name, visitor_phone=booking.visitor_phone,
+        visitor_message=booking.visitor_message, special_requirements=booking.special_requirements,
+    )
+    return ApiResponse(code=200, message='Solicitud de reserva cancelada correctamente.', success=True, data=response)
+
+
 @router.get('/operator', response_model=ApiResponse[list[OperatorBookingResponse]])
 def list_operator_bookings(
     user: Annotated[UserResponse, Depends(require_role(UserRole.GUIDE))],

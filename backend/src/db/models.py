@@ -9,6 +9,8 @@ from .base import Base
 class User(Base):
     __tablename__ = 'users'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    full_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    profile_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -39,6 +41,7 @@ class Route(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     municipality: Mapped[str] = mapped_column(String(80), nullable=False)
     route_points: Mapped[list] = mapped_column(JSON, nullable=False)
+    images: Mapped[list] = mapped_column(JSON, nullable=False)
     start_latitude: Mapped[float] = mapped_column(nullable=False)
     start_longitude: Mapped[float] = mapped_column(nullable=False)
     duration_hours: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)

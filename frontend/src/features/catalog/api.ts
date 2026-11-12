@@ -11,6 +11,7 @@ interface PublicRoute {
   price: number;
   location_start: { latitude: number; longitude: number };
   route_points: { latitude: number; longitude: number }[];
+  images: string[];
   guide_name: string;
 }
 
@@ -21,10 +22,9 @@ export class CatalogApiError extends Error {
 }
 
 const difficultyLabel = { low: 'Baja', medium: 'Media', high: 'Alta' } as const;
-const image = (id: number) => `https://images.unsplash.com/photo-${['1464822759023-fed622ff2c3b', '1500534623283-312aade485b7', '1511497584788-876760111969'][id % 3]}?auto=format&fit=crop&w=1200&q=85`;
-
 function mapRoute(route: PublicRoute): Experience {
-  return { id: route.id, municipality: route.municipality, name: route.name, description: route.description, detail: route.detail, rating: 0, reviews: 0, price: route.price, difficulty: difficultyLabel[route.difficulty], duration: `${route.duration_hours} horas`, location: route.municipality, guide: { name: route.guide_name, rating: 0, reviews: 0, bio: 'Guía local del corredor Sugamuxi.', avatar: image(route.id) }, images: [image(route.id), image(route.id + 1), image(route.id + 2)], routePoints: route.route_points.length ? route.route_points : [route.location_start] };
+  const images = route.images.length ? route.images : ['/pwa-512.svg'];
+  return { id: route.id, municipality: route.municipality, name: route.name, description: route.description, detail: route.detail, rating: 0, reviews: 0, price: route.price, difficulty: difficultyLabel[route.difficulty], duration: `${route.duration_hours} horas`, location: route.municipality, guide: { name: route.guide_name, rating: 0, reviews: 0, bio: 'Guía local del corredor Sugamuxi.', avatar: images[0] }, images, routePoints: route.route_points.length ? route.route_points : [route.location_start] };
 }
 
 async function get<T>(url: string): Promise<T> {

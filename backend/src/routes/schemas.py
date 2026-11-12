@@ -18,6 +18,7 @@ class RouteInput(BaseModel):
     price_cop: int = Field(ge=0)
     location_start: RoutePoint
     route_points: list[RoutePoint] = Field(default_factory=list)
+    images: list[str] = Field(default_factory=list)
     status: Literal['active', 'draft', 'paused'] = 'draft'
 
 
@@ -37,4 +38,6 @@ class PublicRouteResponse(BaseModel):
     price: int
     location_start: RoutePoint
     route_points: list[RoutePoint]
+    images: list[str]
     guide_name: str
+    images: list[str]

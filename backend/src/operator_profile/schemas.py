@@ -12,6 +12,12 @@ class OperatorProfileInput(BaseModel):
     bio: str | None = Field(default=None, max_length=2000)
 
 
-class OperatorProfileResponse(OperatorProfileInput):
+class OperatorProfileResponse(BaseModel):
     id: int
+    full_name: str
+    municipality: str
+    phone: str
+    rnt_number: str
+    soporte_rnt_url: str | None = None
+    bio: str | None = None
     verification_status: Literal['pending', 'verified', 'rejected']

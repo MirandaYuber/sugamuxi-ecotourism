@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Annotated
+from uuid import uuid4
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from src.core.config import settings
@@ -15,6 +17,9 @@ from src.core.responses import ApiResponse
 
 
 router = APIRouter(prefix='/api/auth', tags=['auth'])
+PROFILE_MEDIA_DIR = Path(__file__).resolve().parents[2] / 'media' / 'profiles'
+ALLOWED_PROFILE_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024
 
 
 def create_access_token(user: UserResponse) -> str:
@@ -23,11 +28,38 @@ def create_access_token(user: UserResponse) -> str:
 
 
 @router.post('/register', response_model=ApiResponse[TokenResponse], status_code=status.HTTP_201_CREATED)
-def register(data: RegisterRequest, db: Annotated[Session, Depends(get_db)]) -> ApiResponse[TokenResponse]:
+async def register(
+    full_name: Annotated[str, Form(...)],
+    email: Annotated[str, Form(...)],
+    password: Annotated[str, Form(...)],
+    role: Annotated[str, Form()] = 'visitor',
+    profile_image: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db),
+) -> ApiResponse[TokenResponse]:
+    try:
+        data = RegisterRequest(full_name=full_name, email=email, password=password, role=role)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail='Los datos de registro no son válidos.') from error
+    image_content: bytes | None = None
+    image_extension = '.jpg'
+    if profile_image is not None:
+        if profile_image.content_type not in ALLOWED_PROFILE_IMAGE_TYPES:
+            raise HTTPException(status_code=415, detail='La foto debe ser JPG, PNG, WEBP o GIF.')
+        image_content = await profile_image.read()
+        if len(image_content) > MAX_PROFILE_IMAGE_SIZE:
+            raise HTTPException(status_code=413, detail='La foto de perfil debe pesar máximo 5 MB.')
+        image_extension = Path(profile_image.filename or '').suffix.lower() or '.jpg'
     try:
         user = create_user(db, data)
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    if image_content is not None:
+        PROFILE_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+        filename = f'{uuid4().hex}{image_extension}'
+        (PROFILE_MEDIA_DIR / filename).write_bytes(image_content)
+        user.profile_image_url = f'/media/profiles/{filename}'
+        db.commit()
+        db.refresh(user)
     response = to_response(user)
     return ApiResponse(code=201, message='Usuario registrado correctamente.', success=True, data=TokenResponse(access_token=create_access_token(response), user=response))
 

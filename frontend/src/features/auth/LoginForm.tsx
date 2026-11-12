@@ -24,6 +24,8 @@ export function LoginForm() {
       const result = await login(values.email, values.password);
       localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user_role', result.user.role === 'guide' ? 'operator' : 'visitor');
+      localStorage.setItem('user_name', result.user.full_name);
+      if (result.user.profile_image_url) localStorage.setItem('user_profile_image', result.user.profile_image_url);
       navigate(searchParams.get('returnTo') ?? (result.user.role === 'guide' ? '/operator/dashboard' : '/'));
     } catch (error) {
       setSubmitError(error instanceof AuthApiError && error.status === 401

@@ -27,13 +27,13 @@ def _verify_password(password: str, encoded: str) -> bool:
 
 
 def to_response(user: User) -> UserResponse:
-    return UserResponse(id=str(user.id), email=user.email, role=UserRole(user.role))
+    return UserResponse(id=str(user.id), full_name=user.full_name, profile_image_url=user.profile_image_url, email=user.email, role=UserRole(user.role))
 
 
 def create_user(db: Session, data: RegisterRequest) -> User:
     if db.scalar(select(User).where(User.email == data.email)) is not None:
         raise ValueError('El correo ya está registrado')
-    user = User(email=data.email, role=data.role.value, hashed_password=_hash_password(data.password), is_active=True)
+    user = User(full_name=data.full_name, email=data.email, role=data.role.value, hashed_password=_hash_password(data.password), is_active=True)
     db.add(user)
     try:
         db.commit()

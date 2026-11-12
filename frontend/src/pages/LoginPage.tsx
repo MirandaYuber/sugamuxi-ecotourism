@@ -1,9 +1,22 @@
 import { ArrowLeft, Check, MapPin, Mountain, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 import { LoginForm } from '@/features/auth/LoginForm';
+import { RegisterForm } from '@/features/auth/RegisterForm';
+import type { AuthResponse } from '@/features/auth/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function LoginPage() {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const handleRegistered = (result: AuthResponse) => {
+    localStorage.setItem('access_token', result.access_token);
+    localStorage.setItem('user_role', result.user.role === 'guide' ? 'operator' : 'visitor');
+    localStorage.setItem('user_name', result.user.full_name);
+    if (result.user.profile_image_url) localStorage.setItem('user_profile_image', result.user.profile_image_url);
+    navigate(searchParams.get('returnTo') ?? (result.user.role === 'guide' ? '/operator/dashboard' : '/'));
+  };
   return (
     <main className="flex min-h-screen flex-col bg-[#f7f8f3] px-5 py-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-8 sm:py-10">
       <div className="flex justify-end"><ThemeToggle /></div>
@@ -46,11 +59,11 @@ export function LoginPage() {
                   <ShieldCheck size={25} />
                 </div>
               <p className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">Acceso para visitantes y guías</p>
-                <h2 className="text-3xl font-bold tracking-tight text-green-950 dark:text-white">Bienvenido de nuevo</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Ingresa para gestionar tus reservas o administrar tus experiencias.</p>
+                <h2 className="text-3xl font-bold tracking-tight text-green-950 dark:text-white">{isRegistering ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{isRegistering ? 'Regístrate para descubrir experiencias o administrar tus rutas.' : 'Ingresa para gestionar tus reservas o administrar tus experiencias.'}</p>
               </div>
-              <LoginForm />
-              <p className="mt-6 text-center text-xs leading-5 text-slate-400 dark:text-slate-500">Acceso de demostración. La autenticación real estará disponible cuando conectemos el backend.</p>
+              {isRegistering ? <RegisterForm onRegistered={handleRegistered} /> : <LoginForm />}
+              <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">{isRegistering ? '¿Ya tienes una cuenta?' : '¿Aún no tienes una cuenta?'} <button type="button" onClick={() => setIsRegistering((current) => !current)} className="font-semibold text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">{isRegistering ? 'Iniciar sesión' : 'Registrarme'}</button></p>
             </div>
           </div>
         </section>

@@ -9,6 +9,7 @@ class UserRole(StrEnum):
 
 
 class RegisterRequest(BaseModel):
+    full_name: str = Field(min_length=3, max_length=160)
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=8, max_length=128)
     role: UserRole = UserRole.VISITOR
@@ -20,6 +21,11 @@ class RegisterRequest(BaseModel):
         if '@' not in email or email.startswith('@') or email.endswith('@'):
             raise ValueError('Debe ser un correo electrónico válido')
         return email
+
+    @field_validator('full_name')
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        return ' '.join(value.strip().split())
 
 
 class LoginRequest(BaseModel):
@@ -34,6 +40,8 @@ class LoginRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: str
+    full_name: str
+    profile_image_url: str | None = None
     email: str
     role: UserRole
 
